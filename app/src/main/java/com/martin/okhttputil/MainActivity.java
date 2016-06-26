@@ -8,8 +8,6 @@ import android.widget.Toast;
 import com.martin.httputil.OKHttpUtil;
 import com.martin.httputil.ResponseHandler;
 
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "TAG";
@@ -19,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        OKHttpUtil.get().url("http://www.baidu.com").noParams().enqueue(new ResponseHandler<List<String>>() {
+        OKHttpUtil.get().url("http://www.baidu.com").noParams().enqueue(new ResponseHandler<String>() {
             @Override
             protected void onStart() {
                 String name = Thread.currentThread().getName();
@@ -27,13 +25,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            protected void resultOnWorkThread(List<String> result) {
+            protected void resultOnWorkThread(String result) {
                 String name = Thread.currentThread().getName();
                 Log.d(TAG, "resultOnWorkThread: " + name);
             }
 
             @Override
-            protected void onSuccess(List<String> result) {
+            protected void onSuccess(String result) {
                 String name = Thread.currentThread().getName();
                 Log.d(TAG, "onSuccess: " + name);
                 Log.d(TAG, "onSuccess: " + result);
