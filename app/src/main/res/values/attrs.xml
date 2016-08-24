@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HansToolbar">
+        <attr name="toolbarTitle" format="string|reference" />
+        <attr name="toolbarTitleColor" format="color|reference" />
+        <attr name="toolbarTitleSize" format="dimension" />
+        <attr name="userSystemTitle" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="DotImageView">
+        <attr name="dotTextColor" format="color|reference" />
+        <attr name="dotColor" format="color|reference" />
+        <attr name="dotSize" format="dimension" />
+        <attr name="dotVisible" format="boolean" />
+        <attr name="dotText" format="string" />
+        <attr name="dotStyle" format="enum">
+            <enum name="circle" value="0" />
+            <enum name="round" value="1" />
+        </attr>
+        <attr name="dotPadding" format="dimension" />
+        <attr name="dotInnerPadding" format="dimension"/>
+    </declare-styleable>
+
+
+</resources>

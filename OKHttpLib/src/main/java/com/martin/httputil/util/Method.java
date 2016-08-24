@@ -1,4 +1,4 @@
-package com.martin.httputil;
+package com.martin.httputil.util;
 
 /**
  * 描述:
@@ -7,7 +7,7 @@ package com.martin.httputil;
  */
 public enum Method {
 
-    GET("GET"), POST("POST");
+    GET("GET"), POST("POST"), PUT("PUT");
 
     private String method;
 
