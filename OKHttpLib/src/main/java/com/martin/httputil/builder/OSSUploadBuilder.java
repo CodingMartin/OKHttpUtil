@@ -14,15 +14,15 @@ import com.alibaba.sdk.android.oss.common.auth.OSSCredentialProvider;
 import com.alibaba.sdk.android.oss.model.PutObjectRequest;
 import com.alibaba.sdk.android.oss.model.PutObjectResult;
 import com.google.gson.reflect.TypeToken;
-import com.martin.httputil.OKHttpUtil;
+import com.martin.httputil.HTTP;
 import com.martin.httputil.handler.HttpConfigController;
 import com.martin.httputil.pojo.FileResponseProvider;
 import com.martin.httputil.pojo.FileUploadProvider;
+import com.martin.httputil.pojo.OSSResult;
 import com.martin.httputil.pojo.OssRequestDataProvider;
-import com.martin.httputil.pojo.Result;
 import com.martin.httputil.util.HSON;
 import com.martin.httputil.util.HttpConstants;
-import com.martin.httputil.util.ParamsType;
+import com.martin.httputil.util.Type;
 import com.martin.httputil.util.UploadException;
 
 import java.io.File;
@@ -41,10 +41,10 @@ import okhttp3.Response;
  */
 public class OSSUploadBuilder {
 
-    public static final String APP_ID = "appId";
-    public static final String FILE_TYPE = "fileType";
-    public static final String BUSINESS_ID = "businessId";
-    public static final String FILE_NAME = "fileName";
+    public static final java.lang.String APP_ID = "appId";
+    public static final java.lang.String FILE_TYPE = "fileType";
+    public static final java.lang.String BUSINESS_ID = "businessId";
+    public static final java.lang.String FILE_NAME = "fileName";
 
     List<File> files;
     int businessId = HttpConstants.BusinessIdTieZi;
@@ -148,13 +148,13 @@ public class OSSUploadBuilder {
      *
      * @return 返回图片在服务器总的路径, 可能为空
      */
-    public List<String> execute() throws UploadException {
+    public List<java.lang.String> execute() throws UploadException {
         if (files == null || files.size() == 0) return null;
-        HttpConfigController mHandler = OKHttpUtil.getController();
+        HttpConfigController mHandler = HTTP.getController();
         if (mHandler != null && mHandler.networkCheck()) { //前置检查
             return null;
         }
-        final List<String> fileServerPaths = new ArrayList<>(files.size());
+        final List<java.lang.String> fileServerPaths = new ArrayList<>(files.size());
         requestRetryFlags = new SparseIntArray(files.size());
 
         for (int i = 0; i < files.size(); i++) {
@@ -167,19 +167,21 @@ public class OSSUploadBuilder {
 
     }
 
-    private void uploadFile(int index, List<String> fileServerPaths, File file) throws UploadException {
+    private void uploadFile(int index, List<java.lang.String> fileServerPaths, File file) throws UploadException {
         try {
-            Response response = OKHttpUtil.get().api(HttpConstants.UploadImage).addParam(APP_ID, HttpConstants.AppId)
+            Response response = HTTP.get().api(HttpConstants.UploadImage).addParam(APP_ID, HttpConstants.AppId)
                     .addParam(FILE_TYPE, type).addParam(BUSINESS_ID, businessId)
-                    .addParam(FILE_NAME, getFileName(file)).paramType(ParamsType.RAW)
+                    .addParam(FILE_NAME, getFileName(file)).paramType(Type.RAW)
                     .sign().execute();
+            if (response == null) {
+                return;
+            }
             if (response.isSuccessful()) {
-                String string = response.body().string();
-                Result<FileUploadProvider> result = HSON.parse(string, new TypeToken<Result<FileUploadProvider>>() {
+                java.lang.String string = response.body().string();
+                OSSResult<FileUploadProvider> result = HSON.parse(string, new TypeToken<OSSResult<FileUploadProvider>>() {
                 });
-
-                HttpConfigController mHandler = OKHttpUtil.getController();
-                if (mHandler != null && !mHandler.unitHandle(result)) { //后置检查
+                HttpConfigController mHandler = HTTP.getController();
+                if (mHandler != null && !mHandler.unitHandle(string)) { //后置检查
                     return;
                 }
 
@@ -210,15 +212,19 @@ public class OSSUploadBuilder {
         }
     }
 
-    private void parseOSSResult(int index, List<String> fileServerPaths, File file, PutObjectResult ossResult) throws UploadException {
-        //解析结果数据
-        String body = ossResult.getServerCallbackReturnBody();
-        Result<FileResponseProvider> uploadResult = HSON.parse(body, new TypeToken<Result<FileResponseProvider>>() {
-        });
-        if (uploadResult.isSuccess()) {
-            fileServerPaths.add(uploadResult.data.fileName);
-        } else {
-            checkRetryCount(index, fileServerPaths, file, "重试次数超过" + maxRetry + "次了");
+    private void parseOSSResult(int index, List<java.lang.String> fileServerPaths, File file, PutObjectResult ossResult) throws UploadException {
+        try {
+            //解析结果数据
+            java.lang.String body = ossResult.getServerCallbackReturnBody();
+            OSSResult<FileResponseProvider> uploadResult = HSON.parse(body, new TypeToken<OSSResult<FileResponseProvider>>() {
+            });
+            if (uploadResult.isSuccess()) {
+                fileServerPaths.add(uploadResult.data.fileName);
+            } else {
+                checkRetryCount(index, fileServerPaths, file, "重试次数超过" + maxRetry + "次了");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -238,7 +244,7 @@ public class OSSUploadBuilder {
         return new OSSClient(appContext, data.endpoint, credentialProvider, mClientConfiguration);
     }
 
-    private void checkRetryCount(int index, List<String> fileServerPaths, File file, String msg) throws UploadException {
+    private void checkRetryCount(int index, List<java.lang.String> fileServerPaths, File file, java.lang.String msg) throws UploadException {
         int retryCount = requestRetryFlags.get(index);
         if (retryCount < 2) {
             requestRetryFlags.put(index, ++retryCount);
@@ -248,8 +254,8 @@ public class OSSUploadBuilder {
         }
     }
 
-    private String getFileName(File file) {
-        String path = file.getAbsolutePath();
+    private java.lang.String getFileName(File file) {
+        java.lang.String path = file.getAbsolutePath();
         return path.split("/")[path.split("/").length - 1];
     }
 }

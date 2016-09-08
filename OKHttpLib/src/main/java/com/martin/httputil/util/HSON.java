@@ -1,14 +1,10 @@
 package com.martin.httputil.util;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Desc:
@@ -18,6 +14,7 @@ import java.util.Set;
 public class HSON {
     private static final String DEFAULT_OBJ = "{}";
     private static Gson sGson;
+    private static Gson sGsonBuidler;
 
     public static Gson getGson() {
         if (sGson == null) {
@@ -26,25 +23,34 @@ public class HSON {
         return sGson;
     }
 
+    public static Gson getGsonBuilder() {
+        if (sGsonBuidler == null) {
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            gsonBuilder.disableHtmlEscaping();
+            sGsonBuidler = gsonBuilder.create();
+        }
+        return sGsonBuidler;
+    }
+
     private static Gson checkGson(Gson gson) {
         return gson == null ? getGson() : gson;
     }
 
-    public static <T> T parse(String json, Class<T> clazz) {
+    public static <T> T parse(String json, Class<T> clazz) throws Exception{
         return parse(null, json, clazz);
     }
 
-    public static <T> T parse(Gson gson, String json, Class<T> clazz) {
+    public static <T> T parse(Gson gson, String json, Class<T> clazz) throws Exception {
         if (json == null || clazz == null) return null;
         gson = checkGson(gson);
         return gson.fromJson(json, clazz);
     }
 
-    public static <T> T parse(String json, TypeToken<T> token) {
+    public static <T> T parse(String json, TypeToken<T> token) throws Exception {
         return parse(null, json, token);
     }
 
-    public static <T> T parse(Gson gson, String json, TypeToken<T> token) {
+    public static <T> T parse(Gson gson, String json, TypeToken<T> token) throws Exception{
         if (json == null || token == null) return null;
         gson = checkGson(gson);
         return gson.fromJson(json, token.getType());
@@ -56,20 +62,17 @@ public class HSON {
         return gson.toJson(obj);
     }
 
-    public static <T> String toJson(T obj) {
+    public static <T> String toJson(T obj) throws Exception {
         return toJson(null, obj);
     }
 
-    public static String toJson(Map<String, Object> params) throws JSONException {
+    public static String toJsonWithoutEscape(Map<String, Object> params) throws Exception {
         if (params == null || params.size() == 0) return DEFAULT_OBJ;
-        JSONObject o = new JSONObject();
-        Set<String> set = params.keySet();
-        Iterator<String> iterator = set.iterator();
-        while (iterator.hasNext()) {
-            String key = iterator.next();
-            Object value = params.get(key);
-            o.put(key, value);
-        }
-        return o.toString();
+        return getGsonBuilder().toJson(params);
+    }
+
+    public static String toJson(Map<String, Object> params) throws Exception {
+        if (params == null) return null;
+        return getGson().toJson(params);
     }
 }

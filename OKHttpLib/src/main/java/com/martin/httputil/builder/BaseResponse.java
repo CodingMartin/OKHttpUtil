@@ -1,11 +1,9 @@
 package com.martin.httputil.builder;
 
-import com.google.gson.reflect.TypeToken;
-import com.martin.httputil.OKHttpUtil;
-import com.martin.httputil.handler.IResponseHandleEx;
+import com.martin.httputil.HTTP;
+import com.martin.httputil.handler.DataCallback;
+import com.martin.httputil.handler.DataCallbackEx;
 import com.martin.httputil.handler.HttpConfigController;
-import com.martin.httputil.pojo.Result;
-import com.martin.httputil.util.HSON;
 
 import java.io.IOException;
 
@@ -18,30 +16,45 @@ import okhttp3.Response;
  * Author:Martin
  * CREATE:26/06/2016
  */
-public abstract class BaseResponse<T> implements Callback {
+public abstract class BaseResponse implements Callback {
     private int id;
-    private IResponseHandle<T> mIResponseHandle;
-    private boolean cache;
+    private DataCallback mIResponseHandle;
 
     void setId(int id) {
         this.id = id;
     }
 
-    public BaseResponse(IResponseHandle<T> responseHandleEx) {
+    public BaseResponse(DataCallback responseHandleEx) {
         this.mIResponseHandle = responseHandleEx;
     }
 
-    public BaseResponse() {
-    }
-
-
     @Override
     public final void onFailure(Call call, IOException e) {
-        sendFailure(call, e);
+        deliverFailure(call, e);
     }
 
-    protected void sendFailure(final Call call, final IOException e) {
-        OKHttpUtil.getDelivery().execute(new Runnable() {
+    @Override
+    public final void onResponse(Call call, Response response) throws IOException {
+        if (call.isCanceled()) return;
+        try {
+            if (response.isSuccessful()) { //请求成功
+                String body = response.body().string();
+                resultOnWorkThread(id, body);
+                deliverSuccess(body);
+            } else {
+                deliverFailure(call, new IOException("request is failed, response' code is:" + response.code()));
+            }
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            deliverFailure(call, e1);
+        } finally {
+            if (response.body() != null)
+                response.body().close();
+        }
+    }
+
+    private void deliverFailure(final Call call, final Exception e) {
+        HTTP.getDelivery().execute(new Runnable() {
             @Override
             public void run() {
                 onFailed(id, call, e);
@@ -49,12 +62,12 @@ public abstract class BaseResponse<T> implements Callback {
         });
     }
 
-    protected void sendSuccess(Result<T> result) {
-        final Result<T> finalResult = result;
-        OKHttpUtil.getDelivery().execute(new Runnable() {
+    protected void deliverSuccess(String result) {
+        final String finalResult = result;
+        HTTP.getDelivery().execute(new Runnable() {
             @Override
             public void run() {
-                HttpConfigController mPreHandler = OKHttpUtil.getController();
+                HttpConfigController mPreHandler = HTTP.getController();
                 if (mPreHandler != null) {
                     if (mPreHandler.unitHandle(finalResult)) {
                         onSuccess(id, finalResult);
@@ -66,38 +79,10 @@ public abstract class BaseResponse<T> implements Callback {
         });
     }
 
-    @Override
-    public final void onResponse(Call call, Response response) throws IOException {
-        try {
-            if (call.isCanceled()) {
-                sendFailure(call, new IOException("Request is Canceled!"));
-            }
-
-            if (response.isSuccessful()) { //请求成功
-                String body = response.body().string();
-                Result<T> result = parseResult(body);
-                if (result == null) {
-                    result = HSON.parse(body, new TypeToken<Result<T>>() {
-                    });
-                }
-                resultOnWorkThread(id, result);
-                sendSuccess(result);
-            } else {
-                sendFailure(call, new IOException("request is failed, response' code is:" + response.code()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            sendFailure(call, e);
-        } finally {
-            if (response.body() != null)
-                response.body().close();
-        }
-    }
-
     /**
-     * 如果重写了这个方法务必返回true ,这样默认的解析就可以被覆盖
+     * 如果重写了这个方法务必返回 ,这样默认的解析就可以被覆盖
      */
-    protected Result<T> parseResult(String body) {
+    protected String parseResult(String body) {
         return null;
     }
 
@@ -107,8 +92,8 @@ public abstract class BaseResponse<T> implements Callback {
      */
     protected void onStart(int id) {
         if (mIResponseHandle != null) {
-            if (mIResponseHandle instanceof IResponseHandleEx) {
-                ((IResponseHandleEx) mIResponseHandle).onStart(id);
+            if (mIResponseHandle instanceof DataCallbackEx) {
+                ((DataCallbackEx) mIResponseHandle).onStart(id);
             }
         }
     }
@@ -116,10 +101,10 @@ public abstract class BaseResponse<T> implements Callback {
     /**
      * 执行在异步线程,如果需要在返回结果之后进行其它操作可以在这里处理
      */
-    protected void resultOnWorkThread(int id, Result<T> result) {
+    protected void resultOnWorkThread(int id, String result) {
         if (mIResponseHandle != null) {
-            if (mIResponseHandle instanceof IResponseHandleEx) {
-                ((IResponseHandleEx) mIResponseHandle).resultOnWorkThread(id, result);
+            if (mIResponseHandle instanceof DataCallbackEx) {
+                ((DataCallbackEx) mIResponseHandle).resultOnWorkThread(id, result);
             }
         }
     }
@@ -127,7 +112,7 @@ public abstract class BaseResponse<T> implements Callback {
     /**
      * 请求成功,在UI线程
      */
-    protected void onSuccess(int id, Result<T> result) {
+    protected void onSuccess(int id, String result) {
         if (mIResponseHandle != null) {
             mIResponseHandle.onSuccess(id, result);
         }
@@ -136,13 +121,9 @@ public abstract class BaseResponse<T> implements Callback {
     /**
      * 请求失败,在UI线程
      */
-    protected void onFailed(int id, Call call, IOException e) {
+    protected void onFailed(int id, Call call, Exception e) {
         if (mIResponseHandle != null) {
             mIResponseHandle.onFailed(id, call, e);
         }
-    }
-
-    public void setCache(boolean cache) {
-        this.cache = cache;
     }
 }

@@ -5,18 +5,18 @@ package com.martin.httputil.util;
  * Author:Martin
  * Date:2016/7/12
  */
-public enum ParamsType {
+public interface Type {
     /**
      * 普通的请求参数
      */
-    ORDINARY,
+    int ORDINARY = 0;
     /**
      * 包含rawRequest的请求参数
      */
-    RAW,
+    int RAW = 1;
     /**
      * 包含command的请求参数
      */
-    COMMAND;
+    int COMMAND = 2;
 
 }

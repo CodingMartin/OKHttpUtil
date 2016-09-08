@@ -36,4 +36,8 @@ public class HttpConstants {
      **/
     public static final String UploadImage = "file.appToken";
     public static final String DATA = "data";
+
+    public static final String GET = "GET";
+    public static final String POST = "POST";
+    public static final String PUT = "PUT";
 }

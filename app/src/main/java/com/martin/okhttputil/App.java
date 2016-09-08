@@ -3,12 +3,11 @@ package com.martin.okhttputil;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.martin.httputil.OKHttpUtil;
+import com.martin.httputil.HTTP;
 import com.martin.httputil.handler.HttpConfigController;
 import com.martin.httputil.monitor.NetworkMonitor;
 import com.martin.httputil.monitor.NetworkMonitorApp;
 import com.martin.httputil.monitor.NetworkObserver;
-import com.martin.httputil.pojo.Result;
 
 import java.io.File;
 
@@ -38,9 +37,9 @@ public class App extends NetworkMonitorApp {
     public void onCreate() {
         super.onCreate();
         NetworkMonitor.getInstance().addObserver(mObserver);
-        OKHttpUtil.initConfigController(new HttpConfigController() {
+        HTTP.setConfigController(new HttpConfigController() {
             @Override
-            public boolean unitHandle(Result result) {
+            public boolean unitHandle(String result) {
                 return true;
             }
 
@@ -49,10 +48,6 @@ public class App extends NetworkMonitorApp {
                 return false;
             }
 
-            @Override
-            public File cacheDir() {
-                return null;
-            }
         });
     }
 }

@@ -1,11 +1,9 @@
-package com.martin.httputil.handler;
+package com.martin.httputil.util;
 
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
-import com.martin.httputil.util.HttpConstants;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;

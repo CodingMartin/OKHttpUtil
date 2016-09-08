@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 import com.martin.httputil.util.NetworkUtil;
 
@@ -84,7 +83,5 @@ public class NetworkMonitor extends BroadcastReceiver {
         } else {
             isFirst = false;
         }
-
-        Log.d("TAG", intent.getExtras().getString("data") + "------------------");
     }
 }
